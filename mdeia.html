@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的影音日記</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 0 auto; /* 讓內容置中 */
+            padding: 20px;
+            background-color: #fafafa;
+            text-align: center;
+        }
+
+        .media-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        /* 關鍵 CSS：讓圖片和影片不會超出手機螢幕 */
+        img, video {
+            max-width: 100%; 
+            height: auto;
+            border-radius: 5px;
+        }
+
+        h2 { color: #444; }
+    </style>
+</head>
+<body>
+
+    <h1>我的影音日記 📷</h1>
+
+    <div class="media-container">
+        <h2>這是我拍的照片</h2>
+        <img src="朴寶劍.jpg" alt="一隻可愛的貓咪">
+        <p>這張照片是在公園拍的。</p>
+    </div>
+
+    <div class="media-container">
+        <h2>這是我拍的影片</h2>
+        <video src="1111.mp4" controls></video>
+        <p>今天的旅遊紀錄。</p>
+    </div>
+
+    <a href="mdeia.html">回到首頁</a>
+
+</body>
+</html>
