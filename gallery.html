@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的影展</title>
+    <style>
+        /* 1. 網站整體設定 */
+        body {
+            font-family: '微軟正黑體', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4; /* 淺灰背景，讓照片更突出 */
+            color: #333;
+        }
+
+        /* 2. 標題區塊 */
+        header {
+            background-color: #5e5e5e;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* 3. 展覽容器 (限制最大寬度，讓內容不要太發散) */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* 4. 展覽卡片 (這是核心！) */
+        .exhibition-card {
+            background: white;
+            border-radius: 10px; /* 圓角 */
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* 陰影效果 */
+            margin-bottom: 30px; /* 每個作品之間的距離 */
+            
+            /* 關鍵：使用 Flex 讓圖文並排 */
+            display: flex; 
+            flex-wrap: wrap; /* 讓手機版可以自動換行 */
+            align-items: center; /* 垂直置中 */
+        }
+
+        /* 圖片區塊設定 */
+        .card-image {
+            flex: 1 1 400px; /* 圖片基本寬度 400px，可伸縮 */
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 確保圖片填滿且不變形 */
+            display: block;
+        }
+
+        /* 文字區塊設定 */
+        .card-text {
+            flex: 1 1 300px; /* 文字區基本寬度 300px */
+            padding: 40px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+
+        .date {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        p {
+            line-height: 1.6; /* 讓文字好閱讀 */
+        }
+
+        /* 底部導覽 */
+        .footer-nav {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .btn {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>視角・日常</h1>
+        <p>歡迎來到我的影展</p>
+    </header>
+
+    <div class="container">
+
+        <div class="exhibition-card">
+            <div class="card-image">
+                <img src="朴寶劍1.jpg" alt="作品一">
+            </div>
+            <div class="card-text">
+                <h2>寧靜的午後</h2>
+                <span class="date">2023.12.17 攝於 首爾</span>
+                <p>這是一個陽光灑落的午後，狗勾靜靜地站在門外。這張照片我想傳達的是一種歲月靜好的感覺，光影的變化讓毛色看起來特別溫暖。</p>
+            </div>
+        </div>
+
+        <div class="exhibition-card">
+            <div class="card-image">
+                <img src="朴寶劍2.jpg" alt="作品二">
+            </div>
+            <div class="card-text">
+                <h2>城市的角落</h2>
+                <span class="date">2023.11.05 攝於 東京</span>
+                <p>繁忙的街道旁，有一位不起眼的路人。我喜歡這個畫面的對比，模糊背景與短髮路人形成了有趣的畫面。</p>
+            </div>
+        </div>
+
+        <div class="exhibition-card">
+            <div class="card-image">
+                <img src="朴寶劍3.jpg" alt="作品三">
+            </div>
+            <div class="card-text">
+                <h2>雨後的彩虹</h2>
+                <span class="date">2023.10.20 攝於 夏威夷</span>
+                <p>剛下過一場大雨，天空突然放晴。這幅美景雖然只有短短幾秒，但卻讓人感到無比的幸運與充滿希望。</p>
+            </div>
+        </div>
+
+        <div class="footer-nav">
+            <a href="mdeia.html" class="btn">回到首頁</a>
+        </div>
+
+    </div>
+
+</body>
+</html>
