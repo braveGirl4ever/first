@@ -160,63 +160,72 @@
         </div>
 
     <script>
-        // --- 設定區域 ---
-        // 請將下方的 URL 換成你剛剛複製的 "Apps Script 網頁應用程式網址"
-        const API_URL = "https://script.google.com/macros/s/AKfycbz4ZMq7p3zpFATYB3Z6BTZOnP0ald1RiMuM4gklyE1a6KL0a_8urzU29mSOF_KvCp16/exec";
-        
+    const API_URL = "https://script.google.com/macros/s/AKfycbxVfz80tq4229sb6Jrl7e_M1wMIildpklf4SP6E5nRP2j4n-oLH2ak5eLJk9WAPRV4/exec"; // 記得確認網址沒變
         let habits = [];
         
-        // 取得當前年月資訊
+        // --- 新增：使用者名稱管理 ---
+        // 嘗試從瀏覽器記憶體取得名字，沒有的話預設為 "guest"
+        let currentUser = localStorage.getItem('habit_user') || 'guest';
+
+        // 日期設定 (維持不變)
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentMonth = today.getMonth(); 
         const currentDay = today.getDate();
 
-        // 初始化：從雲端讀取資料
+        // 初始化
         init();
 
         async function init() {
+            // 提示使用者輸入名字 (簡單的登入機制)
+            // 如果是第一次進來，或者是 guest，就問名字
+            if (currentUser === 'guest') {
+                const name = prompt("請輸入你的暱稱 (這會用來區分你的資料):", "Guest");
+                if (name) {
+                    currentUser = name;
+                    localStorage.setItem('habit_user', currentUser); // 記住名字
+                }
+            }
+            
+            // 在標題顯示歡迎
+            document.querySelector('h1').innerText = `🚀 ${currentUser} 的習慣追蹤`;
+
             showLoading(true);
             try {
                 await loadHabitsFromCloud();
             } catch (error) {
-                console.error("載入失敗", error);
-                alert("無法讀取雲端資料，請檢查網路或 API 設定。");
+                console.error(error);
             }
             renderHabits();
             showLoading(false);
         }
 
-        // --- 雲端串接函數 (API) ---
+        // --- 修改 API 呼叫 ---
 
-        // 1. 從 Google Sheets 讀取 (GET)
+        // 1. 讀取 (GET) - 加上 user 參數
         async function loadHabitsFromCloud() {
-            if (!API_URL.includes("http")) return; // 防止未設定 URL 報錯
-            const response = await fetch(API_URL);
+            if (!API_URL.includes("http")) return;
+            // 在網址後面加上 ?user=名字
+            const response = await fetch(`${API_URL}?user=${encodeURIComponent(currentUser)}`);
             const data = await response.json();
             habits = data;
         }
 
-        // 2. 同步資料到 Google Sheets (POST)
-        // 注意：Google Apps Script 的 POST 請求在瀏覽器會有 CORS 限制，
-        // 雖然資料會寫入成功，但通常會報錯或需要特殊處理。
-        // 這裡使用 "no-cors" 模式發送，或是簡單的 fetch。
+        // 2. 儲存 (POST) - 傳送 user 資料
         async function saveToCloud() {
-            // 先更新畫面，讓使用者感覺很快 (樂觀更新)
             renderHabits(); 
             
-            // 背景執行上傳
-            const payload = JSON.stringify({ habits: habits });
+            // Payload 裡多包一個 user 欄位
+            const payload = JSON.stringify({ 
+                user: currentUser,
+                habits: habits 
+            });
             
-            // 傳送資料
             fetch(API_URL, {
                 method: "POST",
                 body: payload
-            }).then(res => {
-                console.log("同步成功");
-            }).catch(err => {
-                console.error("同步失敗", err);
-            });
+            }).then(res => console.log("同步成功"))
+            .catch(err => console.error(err));
         }
 
         // --- 核心功能函數 (修改後) ---
