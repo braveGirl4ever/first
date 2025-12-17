@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原子習慣打卡追蹤器</title>
+    <style>
+        /* CSS 樣式區域 */
+        :root {
+            --primary-color: #4CAF50;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 { margin-bottom: 20px; }
+
+        /* 輸入區域 */
+        .input-group {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button.add-btn {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button.add-btn:hover { background-color: #45a049; }
+
+        /* 習慣卡片列表 */
+        #habit-list {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .habit-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .habit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .habit-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .habit-stats {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .streak-badge {
+            background-color: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* 日曆視圖 UI */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr); /* 一週七天 */
+            gap: 5px;
+        }
+
+        .day-cell {
+            aspect-ratio: 1; /* 保持正方形 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            background-color: #eee;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .day-cell:hover { background-color: #ddd; }
+
+        /* 打卡後的樣式 */
+        .day-cell.checked {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+        }
+        
+        /* 今天日期的特殊邊框 */
+        .day-cell.today {
+            border: 2px solid #333;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>🚀 原子習慣追蹤器</h1>
+
+    <div class="input-group">
+        <input type="text" id="habitInput" placeholder="輸入你想養成的習慣 (例：閱讀30分鐘)...">
+        <button class="add-btn" onclick="addHabit()">新增習慣</button>
+    </div>
+
+    <div id="habit-list">
+        </div>
+
+    <script>
+        // --- 設定區域 ---
+        // 請將下方的 URL 換成你剛剛複製的 "Apps Script 網頁應用程式網址"
+        const API_URL = "https://script.google.com/macros/s/AKfycbz4ZMq7p3zpFATYB3Z6BTZOnP0ald1RiMuM4gklyE1a6KL0a_8urzU29mSOF_KvCp16/exec";
+        
+        let habits = [];
+        
+        // 取得當前年月資訊
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth(); 
+        const currentDay = today.getDate();
+
+        // 初始化：從雲端讀取資料
+        init();
+
+        async function init() {
+            showLoading(true);
+            try {
+                await loadHabitsFromCloud();
+            } catch (error) {
+                console.error("載入失敗", error);
+                alert("無法讀取雲端資料，請檢查網路或 API 設定。");
+            }
+            renderHabits();
+            showLoading(false);
+        }
+
+        // --- 雲端串接函數 (API) ---
+
+        // 1. 從 Google Sheets 讀取 (GET)
+        async function loadHabitsFromCloud() {
+            if (!API_URL.includes("http")) return; // 防止未設定 URL 報錯
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            habits = data;
+        }
+
+        // 2. 同步資料到 Google Sheets (POST)
+        // 注意：Google Apps Script 的 POST 請求在瀏覽器會有 CORS 限制，
+        // 雖然資料會寫入成功，但通常會報錯或需要特殊處理。
+        // 這裡使用 "no-cors" 模式發送，或是簡單的 fetch。
+        async function saveToCloud() {
+            // 先更新畫面，讓使用者感覺很快 (樂觀更新)
+            renderHabits(); 
+            
+            // 背景執行上傳
+            const payload = JSON.stringify({ habits: habits });
+            
+            // 傳送資料
+            fetch(API_URL, {
+                method: "POST",
+                body: payload
+            }).then(res => {
+                console.log("同步成功");
+            }).catch(err => {
+                console.error("同步失敗", err);
+            });
+        }
+
+        // --- 核心功能函數 (修改後) ---
+
+        function addHabit() {
+            const input = document.getElementById('habitInput');
+            const name = input.value.trim();
+            if (!name) return alert("請輸入習慣名稱！");
+
+            const newHabit = {
+                id: Date.now(),
+                name: name,
+                logs: []
+            };
+
+            habits.push(newHabit);
+            input.value = '';
+            saveToCloud(); // 改用雲端儲存
+        }
+
+        function deleteHabit(id) {
+            if(confirm("確定要放棄這個習慣嗎？")) {
+                habits = habits.filter(h => h.id !== id);
+                saveToCloud(); // 改用雲端儲存
+            }
+        }
+
+        function toggleCheck(habitId, day) {
+            const habit = habits.find(h => h.id === habitId);
+            
+            // --- 修改處開始：格式改為 MM/DD ---
+            // String(...).padStart(2, '0') 確保 5月變成 '05'
+            const dateStr = `${String(currentMonth + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
+            // --- 修改處結束 ---
+            
+            if (habit.logs.includes(dateStr)) {
+                habit.logs = habit.logs.filter(d => d !== dateStr);
+            } else {
+                habit.logs.push(dateStr);
+            }
+            saveToCloud();
+        }
+
+        // --- 視圖渲染與計算邏輯 (保持不變，但在這裡加上 Loading 效果) ---
+        
+        function showLoading(isLoading) {
+            const list = document.getElementById('habit-list');
+            if (isLoading) {
+                list.innerHTML = '<div style="text-align:center; padding:20px;">☁️ 正在與 Google 同步中...</div>';
+            }
+        }
+
+        function renderHabits() {
+            const list = document.getElementById('habit-list');
+            list.innerHTML = '';
+
+            if (habits.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:#888;">目前沒有習慣，新增一個吧！</div>';
+                return;
+            }
+
+            habits.forEach(habit => {
+                const streak = calculateStreak(habit.logs);
+                const rate = calculateMonthlyRate(habit.logs);
+
+                const card = document.createElement('div');
+                card.className = 'habit-card';
+                card.innerHTML = `
+                    <div class="habit-header">
+                        <div>
+                            <span class="habit-title">${habit.name}</span>
+                            <span class="streak-badge">🔥 連勝: ${streak} 天</span>
+                        </div>
+                        <div class="habit-stats">
+                            本月達成率: <strong>${rate}%</strong>
+                            <button class="delete-btn" onclick="deleteHabit(${habit.id})">刪除</button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid">
+                        ${generateCalendarHTML(habit)}
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // ... (generateCalendarHTML, calculateStreak, calculateMonthlyRate 函數保持原本的程式碼即可，不需變動) ...
+        
+        // 為了完整性，請將原本的 generateCalendarHTML, calculateStreak, calculateMonthlyRate 複製貼上在下方
+        // (這裡省略重複代碼以節省空間，請使用上一版的回覆中的這三個函數)
+        
+        function generateCalendarHTML(habit) {
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            let html = '';
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                // --- 修改處開始：比對的格式也要改成 MM/DD ---
+                const dateStr = `${String(currentMonth + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
+                // --- 修改處結束 ---
+
+                const isChecked = habit.logs.includes(dateStr);
+                const isToday = (day === currentDay);
+
+                html += `
+                    <div class="day-cell ${isChecked ? 'checked' : ''} ${isToday ? 'today' : ''}" 
+                        onclick="toggleCheck(${habit.id}, ${day})"
+                        title="${dateStr}">
+                        ${day}
+                    </div>
+                `;
+            }
+            return html;
+        }
+        function calculateStreak(logs) {
+            if (!logs || logs.length === 0) return 0;
+            
+            let streak = 0;
+            // 我們往回檢查 365 天
+            for (let i = 0; i < 365; i++) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                
+                // --- 修改處開始：將回推的日期也轉成 MM/DD 格式來比對 ---
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const dStr = `${month}/${day}`;
+                // --- 修改處結束 ---
+                
+                if (logs.includes(dStr)) {
+                    streak++;
+                } else {
+                    // 如果是今天沒打卡，先放過（可能晚上才打），但如果是昨天以前沒打，就斷了
+                    if (i === 0) continue; 
+                    break;
+                }
+            }
+            return streak;
+        }
+
+        function calculateMonthlyRate(logs) {
+            if (!logs) return 0;
+            
+            // 目標格式：開頭要是 "MM/" (例如 "12/")
+            const currentMonthPrefix = String(currentMonth + 1).padStart(2, '0') + "/";
+            
+            // 過濾出開頭符合本月的 log
+            const thisMonthLogs = logs.filter(log => log.startsWith(currentMonthPrefix));
+            
+            return Math.round((thisMonthLogs.length / currentDay) * 100);
+        }
+    </script>
+</body>
+</html>
